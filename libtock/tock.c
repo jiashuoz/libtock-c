@@ -40,6 +40,12 @@ void yield_for(bool *cond) {
   }
 }
 
+#if defined(__thumb__)
+
+//
+// IMPLEMENATTION FOR CORTEX-M THUMB BASED PLATFORMS
+//
+
 void yield(void) {
   if (task_cur != task_last) {
     tock_task_t task = task_queue[task_cur];
@@ -68,77 +74,158 @@ void yield(void) {
     // registers r4-r8, r10, r11 and SP (and r9 in PCS variants that designate
     // r9 as v6) As our compilation flags mark r9 as the PIC base register, it
     // does not need to be saved. Thus we must clobber r0-3, r12, and LR
-    // asm volatile (
-    //   "svc 0       \n"
-    //   :
-    //   :
-    //   : "memory", "r0", "r1", "r2", "r3", "r12", "lr"
-    //   );
+    asm volatile (
+      "svc 0       \n"
+      :
+      :
+      : "memory", "r0", "r1", "r2", "r3", "r12", "lr"
+      );
   }
 }
 
 int subscribe(uint32_t driver, uint32_t subscribe,
               subscribe_cb cb, void* userdata) {
-  // register uint32_t r0 asm ("r0") = driver;
-  // register uint32_t r1 asm ("r1") = subscribe;
-  // register void*    r2 asm ("r2") = cb;
-  // register void*    r3 asm ("r3") = userdata;
-  // register int ret asm ("r0");
-  // asm volatile (
-  //   "svc 1"
-  //   : "=r" (ret)
-  //   : "r" (r0), "r" (r1), "r" (r2), "r" (r3)
-  //   : "memory");
-  // return ret;
-  return 0;
+  register uint32_t r0 asm ("r0") = driver;
+  register uint32_t r1 asm ("r1") = subscribe;
+  register void*    r2 asm ("r2") = cb;
+  register void*    r3 asm ("r3") = userdata;
+  register int ret asm ("r0");
+  asm volatile (
+    "svc 1"
+    : "=r" (ret)
+    : "r" (r0), "r" (r1), "r" (r2), "r" (r3)
+    : "memory");
+  return ret;
 }
 
 
 int command(uint32_t driver, uint32_t command, int data, int arg2) {
-  // register uint32_t r0 asm ("r0") = driver;
-  // register uint32_t r1 asm ("r1") = command;
-  // register uint32_t r2 asm ("r2") = data;
-  // register uint32_t r3 asm ("r3") = arg2;
-  // register int ret asm ("r0");
-  // asm volatile (
-  //   "svc 2"
-  //   : "=r" (ret)
-  //   : "r" (r0), "r" (r1), "r" (r2), "r" (r3)
-  //   : "memory"
-  //   );
-  // return ret;
-  return 0;
+  register uint32_t r0 asm ("r0") = driver;
+  register uint32_t r1 asm ("r1") = command;
+  register uint32_t r2 asm ("r2") = data;
+  register uint32_t r3 asm ("r3") = arg2;
+  register int ret asm ("r0");
+  asm volatile (
+    "svc 2"
+    : "=r" (ret)
+    : "r" (r0), "r" (r1), "r" (r2), "r" (r3)
+    : "memory"
+    );
+  return ret;
 }
 
 int allow(uint32_t driver, uint32_t allow, void* ptr, size_t size) {
-  // register uint32_t r0 asm ("r0") = driver;
-  // register uint32_t r1 asm ("r1") = allow;
-  // register void*    r2 asm ("r2") = ptr;
-  // register size_t r3 asm ("r3")   = size;
-  // register int ret asm ("r0");
-  // asm volatile (
-  //   "svc 3"
-  //   : "=r" (ret)
-  //   : "r" (r0), "r" (r1), "r" (r2), "r" (r3)
-  //   : "memory"
-  //   );
-  // return ret;
-  return 0;
+  register uint32_t r0 asm ("r0") = driver;
+  register uint32_t r1 asm ("r1") = allow;
+  register void*    r2 asm ("r2") = ptr;
+  register size_t   r3 asm ("r3") = size;
+  register int ret asm ("r0");
+  asm volatile (
+    "svc 3"
+    : "=r" (ret)
+    : "r" (r0), "r" (r1), "r" (r2), "r" (r3)
+    : "memory"
+    );
+  return ret;
 }
 
 void* memop(uint32_t op_type, int arg1) {
-  // register uint32_t r0 asm ("r0") = op_type;
-  // register int r1 asm ("r1")      = arg1;
-  // register void*   ret asm ("r0");
-  // asm volatile (
-  //   "svc 4"
-  //   : "=r" (ret)
-  //   : "r" (r0), "r" (r1)
-  //   : "memory"
-  //   );
-  // return ret;
-  return 0;
+  register uint32_t r0 asm ("r0") = op_type;
+  register int      r1 asm ("r1") = arg1;
+  register void*   ret asm ("r0");
+  asm volatile (
+    "svc 4"
+    : "=r" (ret)
+    : "r" (r0), "r" (r1)
+    : "memory"
+    );
+  return ret;
 }
+
+#elif defined(__riscv)
+
+//
+// IMPLEMENATTION FOR RISC-V BASED PLATFORMS
+//
+
+void yield(void) {
+  if (task_cur != task_last) {
+    tock_task_t task = task_queue[task_cur];
+    task_cur = (task_cur + 1) % TASK_QUEUE_SIZE;
+    task.cb(task.arg0, task.arg1, task.arg2, task.ud);
+  } else {
+    asm volatile (
+      "li    a0, 0\n"
+      "ecall\n"
+      :
+      :
+      : "memory", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7",
+                  "t0", "t1", "t2", "t3", "t4", "t5", "t6"
+      );
+
+  }
+}
+
+int subscribe(uint32_t driver, uint32_t subscribe,
+              subscribe_cb cb, void* userdata) {
+  register uint32_t a1  asm ("a1") = driver;
+  register uint32_t a2  asm ("a2") = subscribe;
+  register void*    a3  asm ("a3") = cb;
+  register void*    a4  asm ("a4") = userdata;
+  register int      ret asm ("a0");
+  asm volatile (
+    "li    a0, 1\n"
+    "ecall\n"
+    : "=r" (ret)
+    : "r" (a1), "r" (a2), "r" (a3), "r" (a4)
+    : "memory");
+  return ret;
+}
+
+
+int command(uint32_t driver, uint32_t command, int data, int arg2) {
+  register uint32_t a1  asm ("a1") = driver;
+  register uint32_t a2  asm ("a2") = command;
+  register uint32_t a3  asm ("a3") = data;
+  register uint32_t a4  asm ("a4") = arg2;
+  register int      ret asm ("a0");
+  asm volatile (
+    "li    a0, 2\n"
+    "ecall\n"
+    : "=r" (ret)
+    : "r" (a1), "r" (a2), "r" (a3), "r" (a4)
+    : "memory");
+  return ret;
+}
+
+int allow(uint32_t driver, uint32_t allow, void* ptr, size_t size) {
+  register uint32_t a1  asm ("a1") = driver;
+  register uint32_t a2  asm ("a2") = allow;
+  register void*    a3  asm ("a3") = ptr;
+  register size_t   a4  asm ("a4") = size;
+  register int      ret asm ("a0");
+  asm volatile (
+    "li    a0, 3\n"
+    "ecall\n"
+    : "=r" (ret)
+    : "r" (a1), "r" (a2), "r" (a3), "r" (a4)
+    : "memory");
+  return ret;
+}
+
+void* memop(uint32_t op_type, int arg1) {
+  register uint32_t a1  asm ("a1") = op_type;
+  register uint32_t a2  asm ("a2") = arg1;
+  register void*    ret asm ("a0");
+  asm volatile (
+    "li    a0, 4\n"
+    "ecall\n"
+    : "=r" (ret)
+    : "r" (a1), "r" (a2)
+    : "memory");
+  return ret;
+}
+#endif
 
 void* tock_app_memory_begins_at(void) {
   return memop(2, 0);

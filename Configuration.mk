@@ -57,6 +57,7 @@ override CPPFLAGS += \
       -Wl,--warn-common\
       -Wl,--gc-sections\
       -Wl,--emit-relocs\
+      -fPIC\
       -Wl,--no-relax      # 04/2019: Not sure if this is needed, should prevent use of global_pointer for riscv
 
 # Work around https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85606

@@ -165,15 +165,15 @@ void _start(void* app_start __attribute__((unused)),
     // myhdr->bss_start). With all of that true, then the size is equivalent
     // to the end of the BSS section.
     //
-    // uint32_t appdata_size = (myhdr->bss_start + myhdr->bss_size) - myhdr->got_start;
+    // uint32_t appdata_size = myhdr->bss_start + myhdr->bss_size;
     "lw   t1, 24(a0)\n"         // t1 = myhdr->bss_start
     "lw   t2, 28(a0)\n"         // t2 = myhdr->bss_size
     "lw   t3,  4(a0)\n"         // t3 = myhdr->got_start
     "add  t1, t1, t2\n"         // t1 = bss_start + bss_size
-    "sub  t1, t1, t3\n"         // t1 = (bss_start + bss_size) - got_start
     //
     // Move arguments we need to keep over to callee-saved locations.
     "mv   s0, a0\n"             // s0 = void* app_start
+    "mv   s1, t0\n"             // s1 = stack_top
     //
     // Now we may want to move the stack pointer. If the kernel set the
     // `app_heap_break` larger than we need (and we are going to call `brk()`
@@ -203,7 +203,7 @@ void _start(void* app_start __attribute__((unused)),
     // memop(10, stacktop);
     "li  a0, 4\n"               // a0 = 4   // memop syscall
     "li  a1, 10\n"              // a1 = 10
-    "mv  a2, t0\n"              // a2 = stacktop
+    "mv  a2, s1\n"              // a2 = stacktop
     "ecall\n"                   // memop
     //
     // Debug support, tell the kernel the heap location
@@ -215,12 +215,12 @@ void _start(void* app_start __attribute__((unused)),
     "ecall\n"                   // memop
     //
     // Setup initial stack pointer for normal execution
-    "mv   sp, t0\n"             // sp = stacktop
+    "mv   sp, s1\n"             // sp = stacktop
     "mv   s0, sp\n"             // Set the frame pointer to sp.
     //
     // Call into the rest of startup. This should never return.
     "mv   a0, s0\n"             // first arg is app_start
-    "mv   a1, t0\n"             // second arg is stacktop
+    "mv   a1, s1\n"             // second arg is stacktop
     "jal  _c_start\n"
   );
 

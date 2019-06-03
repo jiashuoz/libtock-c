@@ -165,10 +165,12 @@ void _start(void* app_start __attribute__((unused)),
     // myhdr->bss_start). With all of that true, then the size is equivalent
     // to the end of the BSS section.
     //
-    // uint32_t appdata_size = myhdr->bss_start + myhdr->bss_size;
+    // uint32_t appdata_size = (myhdr->bss_start + myhdr->bss_size) - myhdr->got_start;
     "lw   t1, 24(a0)\n"         // t1 = myhdr->bss_start
     "lw   t2, 28(a0)\n"         // t2 = myhdr->bss_size
+    "lw   t3,  4(a0)\n"         // t3 = myhdr->got_start
     "add  t1, t1, t2\n"         // t1 = bss_start + bss_size
+    "sub  t1, t1, t3\n"         // t1 = (bss_start + bss_size) - got_start
     //
     // Move arguments we need to keep over to callee-saved locations.
     "mv   s0, a0\n"             // s0 = void* app_start
@@ -185,11 +187,11 @@ void _start(void* app_start __attribute__((unused)),
                                 // then we need to move the stack pointer
                                 // before we call the `brk` syscall.
     "mv  sp, t0\n"              // Update the stack pointer
-    //
+
     "skip_set_sp:\n"            // Back to regularly scheduled programming.
-    //
+
     // Call `brk` to set to requested memory
-    //
+
     // memop(0, stacktop + appdata_size);
     "li  a0, 4\n"               // a0 = 4   // memop syscall
     "li  a1, 0\n"               // a1 = 0

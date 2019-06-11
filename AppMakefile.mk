@@ -253,7 +253,7 @@ $(BUILDDIR)/$(PACKAGE_NAME).tab: $(foreach platform, $(TOCK_ARCHS), $(BUILDDIR)/
 
 # Rules for building apps
 .PHONY:	all
-all:	$(BUILDDIR)/$(PACKAGE_NAME).tab $(foreach platform, $(TOCK_ARCHS), $(BUILDDIR)/$(call ARCH_FN,$(platform))/$(call ARCH_FN,$(platform)).bin)
+all:	$(BUILDDIR)/$(PACKAGE_NAME).tab size
 
 .PHONY: size
 size:	$(foreach platform, $(TOCK_ARCHS), $(BUILDDIR)/$(call ARCH_FN,$(platform))/$(call ARCH_FN,$(platform)).elf)

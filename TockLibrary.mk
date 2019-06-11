@@ -144,7 +144,7 @@ ARCH_FN = $(firstword $(subst |, ,$1))
 TOOLCHAIN_FN = $(word 2,$(subst |, ,$1))
 
 # uncomment to print generated rules
-$(info $(foreach platform,$(TOCK_ARCHS), $(call LIB_RULES,$(call ARCH_FN,$(platform)),$(call TOOLCHAIN_FN,$(platform)))))
+# $(info $(foreach platform,$(TOCK_ARCHS), $(call LIB_RULES,$(call ARCH_FN,$(platform)),$(call TOOLCHAIN_FN,$(platform)))))
 # actually generate the rules for each architecture
 $(foreach platform,$(TOCK_ARCHS),$(eval $(call LIB_RULES,$(call ARCH_FN,$(platform)),$(call TOOLCHAIN_FN,$(platform)))))
 

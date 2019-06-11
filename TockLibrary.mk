@@ -93,12 +93,12 @@ $$($(LIBNAME)_BUILDDIR)/$(1):
 
 $$($(LIBNAME)_BUILDDIR)/$(1)/%.o: %.c | $$($(LIBNAME)_BUILDDIR)/$(1)
 	$$(TRACE_CC)
-	$$(Q)$(2)$$(CC) $$(CFLAGS) -march=$(1) -mabi=ilp32 -mcmodel=medlow $$(CPPFLAGS) $$(CPPFLAGS_$(1)) -MF"$$(@:.o=.d)" -MG -MM -MP -MT"$$(@:.o=.d)@" -MT"$$@" "$$<"
-	$$(Q)$(2)$$(CC) $$(CFLAGS) -march=$(1) -mabi=ilp32 -mcmodel=medlow $$(CPPFLAGS) $$(CPPFLAGS_$(1)) -c -o $$@ $$<
+	$$(Q)$(2)$$(CC) $$(CFLAGS) $$(CPPFLAGS) $$(CPPFLAGS_$(1)) -MF"$$(@:.o=.d)" -MG -MM -MP -MT"$$(@:.o=.d)@" -MT"$$@" "$$<"
+	$$(Q)$(2)$$(CC) $$(CFLAGS) $$(CPPFLAGS) $$(CPPFLAGS_$(1)) -c -o $$@ $$<
 
 $$($(LIBNAME)_BUILDDIR)/$(1)/%.o: %.S | $$($(LIBNAME)_BUILDDIR)/$(1)
 	$$(TRACE_AS)
-	$$(Q)$(2)$$(AS) $$(ASFLAGS) -mcpu=$(1) -mabi=ilp32 -mcmodel=medlow $$(CPPFLAGS) -c -o $$@ $$<
+	$$(Q)$(2)$$(AS) $$(ASFLAGS) $$(CPPFLAGS) $$(CPPFLAGS_$(1)) -c -o $$@ $$<
 
 $(LIBNAME)_OBJS_$(1) += $$(patsubst %.s,$$($(LIBNAME)_BUILDDIR)/$(1)/%.o,$$(filter %.s, $$($(LIBNAME)_SRCS_FLAT)))
 $(LIBNAME)_OBJS_$(1) += $$(patsubst %.c,$$($(LIBNAME)_BUILDDIR)/$(1)/%.o,$$(filter %.c, $$($(LIBNAME)_SRCS_FLAT)))
@@ -144,7 +144,7 @@ ARCH_FN = $(firstword $(subst |, ,$1))
 TOOLCHAIN_FN = $(word 2,$(subst |, ,$1))
 
 # uncomment to print generated rules
-# $(info $(foreach platform,$(TOCK_ARCHS), $(call LIB_RULES,$(call ARCH_FN,$(platform)),$(call TOOLCHAIN_FN,$(platform)))))
+$(info $(foreach platform,$(TOCK_ARCHS), $(call LIB_RULES,$(call ARCH_FN,$(platform)),$(call TOOLCHAIN_FN,$(platform)))))
 # actually generate the rules for each architecture
 $(foreach platform,$(TOCK_ARCHS),$(eval $(call LIB_RULES,$(call ARCH_FN,$(platform)),$(call TOOLCHAIN_FN,$(platform)))))
 

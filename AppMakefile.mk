@@ -134,7 +134,6 @@ $$(BUILDDIR)/$(1)/$(1).elf: $$(OBJS_$(1)) $$(LIBS_$(1)) $$(LAYOUT) | $$(BUILDDIR
 	    -Xlinker --defsym=KERNEL_HEAP_SIZE=$$(KERNEL_HEAP_SIZE)\
 	    -T $$(LAYOUT)\
 	    -nostdlib\
-	    -nostartfiles\
 	    -Wl,--start-group -lc -lgcc $$(OBJS_$(1)) $$(LIBS_$(1)) $$(LEGACY_LIBS) -Wl,--end-group\
 	    -Wl,-Map=$$(BUILDDIR)/$(1)/$(1).Map\
 	    -o $$@

@@ -144,11 +144,6 @@ $$(BUILDDIR)/$(1)/$(1).lst: $$(BUILDDIR)/$(1)/$(1).elf
 	$$(TRACE_LST)
 	$$(Q)$(2)$$(OBJDUMP) $$(OBJDUMP_FLAGS) $$< > $$@
 
-
-$$(BUILDDIR)/$(1)/$(1).bin: $$(BUILDDIR)/$(1)/$(1).elf
-	$$(Q)$(2)$$(OBJCOPY) -O binary $$< $$@
-
-
 # checks compiled ELF files to ensure that all libraries and applications were
 # built with the correct flags in order to work on a Tock board
 .PHONY: validate_gcc_flags
@@ -261,9 +256,6 @@ size:	$(foreach platform, $(TOCK_ARCHS), $(BUILDDIR)/$(call ARCH_FN,$(platform))
 
 .PHONY: debug
 debug:	$(foreach platform, $(TOCK_ARCHS), $(BUILDDIR)/$(call ARCH_FN,$(platform))/$(call ARCH_FN,$(platform)).userland_debug.lst)
-
-.PHONY: lst
-lst:	$(foreach platform, $(TOCK_ARCHS), $(BUILDDIR)/$(call ARCH_FN,$(platform))/$(call ARCH_FN,$(platform)).lst)
 
 .PHONY:
 clean::
